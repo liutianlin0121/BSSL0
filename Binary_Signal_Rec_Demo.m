@@ -274,7 +274,7 @@ line_av_time_SAV = plot( p_start:p_delta:1,av_time_SAV);
 line_av_time_BSSl0 = plot( p_start:p_delta:1,av_time_BSSl0); 
 
 
-set(line_av_time_BP, 'Color','black','linewidth',3);
+set(line_av_time_BP, 'Color','black','LineStyle',':','Marker','+','linewidth',3);
 set(line_av_time_boxed_BP, 'Color','red','LineStyle',':','Marker','diamond','linewidth',3);
 set(line_av_time_SN,'Color','blue','LineStyle','--','linewidth',3);
 set(line_av_time_SAV, 'Color','magenta','LineStyle','-','Marker','*','linewidth',3);
