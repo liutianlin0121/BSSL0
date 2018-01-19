@@ -25,6 +25,7 @@
 %  Edit History:
 %  Initial Version: Sept. 2016
 %  First edit: Tianlin Liu Dec. 2017
+%  Second edit: Tianlin Liu Jan 2018
 %  (c) Tianlin Liu
 clear; clc; close all
 
@@ -33,10 +34,12 @@ clear; clc; close all
 m=40; % number of measurements
 n=100; % size of the original vector
 
-Nsim = 10000; % number of simulation. This will take a loooooong time! (approx. 5 days on my laptop) Please consider to uncomment the next line to get a quick impression instead!
-% Nsim = 100; 
+%Nsim = 10000; % number of simulation. This will take a loooooong time! (approx. 5 days on my laptop) Please consider to uncomment the next line to get a quick impression instead!
 
-p_delta = 0.05; 
+%p_delta = 0.05; 
+
+Nsim = 10; 
+p_delta = 0.1; 
 
 
 
@@ -69,6 +72,14 @@ time_boxed_Sl0 = zeros(p_size,Nsim);
 boolean_success_BSSl0 = zeros(p_size,Nsim);
 NSR_BSSl0 = zeros(p_size,Nsim);
 time_BSSl0 = zeros(p_size,Nsim);
+
+boolean_success_Sl0 = zeros(p_size,Nsim);
+NSR_Sl0 = zeros(p_size,Nsim);
+time_Sl0 = zeros(p_size,Nsim);
+
+boolean_success_boxed_Sl0 = zeros(p_size,Nsim);
+NSR_boxed_Sl0 = zeros(p_size,Nsim);
+time_boxed_Sl0 = zeros(p_size,Nsim);
 
 
 
@@ -155,15 +166,29 @@ time_BSSl0 = zeros(p_size,Nsim);
             boolean_success_SAV(j,nsim) = (nnz(sol_SAV - x_orig) == 0); 
             NSR_SAV(j,nsim) = norm(sol_SAV - x_orig)/norm(x_orig);
     
-
-    
+            % SL0
+            tic;
+            x_Sl0 = Sl0(Phi, y, 0.1, 0.5, 2, 1000);            
+            sol_Sl0 =  (x_Sl0 >= 1/2);    % quantization of entries to {0,1}    
+            time_Sl0(j,nsim) = toc;
+            boolean_success_Sl0(j,nsim) = (nnz(sol_Sl0 - x_orig) == 0); 
+            NSR_Sl0(j,nsim) = norm(sol_Sl0 - x_orig)/norm(x_orig);    
+            
+            % boxed SL0
+            tic;
+            x_boxed_Sl0 = boxed_SL0(Phi, y, (1-p0)*n, 0.1, 0.5, 2, 1000);            
+            sol_boxed_Sl0 =  (x_boxed_Sl0 >= 1/2);    % quantization of entries to {0,1}    
+            time_boxed_Sl0(j,nsim) = toc;
+            boolean_success_boxed_Sl0(j,nsim) = (nnz(sol_boxed_Sl0 - x_orig) == 0); 
+            NSR_boxed_Sl0(j,nsim) = norm(sol_boxed_Sl0 - x_orig)/norm(x_orig);    
+            
+        
                           
             % Proposed: BSSl0
             tic;
             x_BSSl0 = BSSl0(Phi, y, p0, 0.1, 0.5, 2, 1000);            
             sol_BSSl0 =  (x_BSSl0 >= 1/2);    % quantization of entries to {0,1}    
             time_BSSl0(j,nsim) = toc;
-
             boolean_success_BSSl0(j,nsim) = (nnz(sol_BSSl0 - x_orig) == 0); 
             NSR_BSSl0(j,nsim) = norm(sol_BSSl0 - x_orig)/norm(x_orig);                  
            
@@ -191,10 +216,20 @@ av_boolean_success_SAV = sum(boolean_success_SAV,2)/Nsim;
 av_NSR_SAV = sum(NSR_SAV,2)/Nsim;
 av_time_SAV = sum(time_SAV,2)/Nsim;
 
-
 av_boolean_success_BSSl0 = sum(boolean_success_BSSl0,2)/Nsim;
 av_NSR_BSSl0 = sum(NSR_BSSl0,2)/Nsim;
 av_time_BSSl0 = sum(time_BSSl0,2)/Nsim;
+
+
+av_boolean_success_Sl0 = sum(boolean_success_Sl0,2)/Nsim;
+av_NSR_Sl0 = sum(NSR_Sl0,2)/Nsim;
+av_time_Sl0 = sum(time_Sl0,2)/Nsim;
+
+
+av_boolean_success_boxed_Sl0 = sum(boolean_success_boxed_Sl0,2)/Nsim;
+av_NSR_boxed_Sl0 = sum(NSR_boxed_Sl0,2)/Nsim;
+av_time_boxed_Sl0 = sum(time_boxed_Sl0,2)/Nsim;
+
 
 
 messagetxt=sprintf('average BP time = %f seconds',mean(av_time_BP));
@@ -205,17 +240,24 @@ messagetxt=sprintf('average SN time = %f seconds',mean(av_time_SN));
         disp(messagetxt);
 messagetxt=sprintf('average SAV time = %f seconds',mean(av_time_SAV));
         disp(messagetxt);
+messagetxt=sprintf('average SL0 time = %f seconds',mean(av_time_Sl0));
+        disp(messagetxt);
+messagetxt=sprintf('average boxed SL0 time = %f seconds',mean(av_time_boxed_Sl0));
+        disp(messagetxt);
 messagetxt=sprintf('average BSSL0 time = %f seconds',mean(av_time_BSSl0));
         disp(messagetxt);
         
-%%
+
 
 av_boolean_failure_BP = 1 - av_boolean_success_BP;
 av_boolean_failure_boxed_BP= 1 - av_boolean_success_boxed_BP;
 av_boolean_failure_SN = 1 - av_boolean_success_SN;
 av_boolean_failure_SAV = 1 - av_boolean_success_SAV;
+av_boolean_failure_Sl0 = 1 - av_boolean_success_Sl0;
+av_boolean_failure_boxed_Sl0 = 1 - av_boolean_success_boxed_Sl0;
 av_boolean_failure_BSSl0 = 1 - av_boolean_success_BSSl0;
 
+%%
 figure(1); 
 ax1 = subplot(4,1,1);
 
@@ -224,12 +266,16 @@ line_av_boolean_failure_BP = plot( p_start:p_delta:1,av_boolean_failure_BP);
 line_av_boolean_failure_boxed_BP = plot( p_start:p_delta:1,av_boolean_failure_boxed_BP); 
 line_av_boolean_failure_SN = plot( p_start:p_delta:1,av_boolean_failure_SN); 
 line_av_boolean_failure_SAV = plot( p_start:p_delta:1,av_boolean_failure_SAV); 
+line_av_boolean_failure_Sl0 = plot( p_start:p_delta:1,av_boolean_failure_Sl0); 
+line_av_boolean_failure_boxed_Sl0 = plot( p_start:p_delta:1,av_boolean_failure_boxed_Sl0); 
 line_av_boolean_failure_BSSl0 = plot( p_start:p_delta:1,av_boolean_failure_BSSl0); 
 
-set(line_av_boolean_failure_BP, 'Color','black','LineStyle',':','Marker','+','linewidth',3);
+set(line_av_boolean_failure_BP, 'Color','black','Marker','+','linewidth',3);
 set(line_av_boolean_failure_boxed_BP, 'Color','red','LineStyle',':','Marker','diamond','linewidth',3);
 set(line_av_boolean_failure_SN,'Color','blue','LineStyle','--','linewidth',3);
 set(line_av_boolean_failure_SAV, 'Color','magenta','LineStyle','-','Marker','*','linewidth',3);
+set(line_av_boolean_failure_Sl0, 'Color','red','LineStyle','--','Marker','+','linewidth',3);
+set(line_av_boolean_failure_boxed_Sl0, 'Color','cyan','Marker','+','linewidth',3);
 set(line_av_boolean_failure_BSSl0, 'Color','green','linewidth',3);
 
        
@@ -246,13 +292,17 @@ line_av_NSR_BP = plot( p_start:p_delta:1,(av_NSR_BP));
 line_av_NSR_boxed_BP = plot( p_start:p_delta:1,(av_NSR_boxed_BP)); 
 line_av_NSR_SN = plot( p_start:p_delta:1,(av_NSR_SN)); 
 line_av_NSR_SAV = plot( p_start:p_delta:1,(av_NSR_SAV)); 
+line_av_NSR_Sl0 = plot( p_start:p_delta:1,(av_NSR_Sl0)); 
+line_av_NSR_boxed_Sl0 = plot( p_start:p_delta:1,(av_NSR_boxed_Sl0)); 
 line_av_NSR_BSSl0 = plot( p_start:p_delta:1,(av_NSR_BSSl0)); 
 
 
-set(line_av_NSR_BP, 'Color','black','LineStyle',':','Marker','+','linewidth',3);
+set(line_av_NSR_BP, 'Color','black','Marker','+','linewidth',3);
 set(line_av_NSR_boxed_BP, 'Color','red','LineStyle',':','Marker','diamond','linewidth',3);
 set(line_av_NSR_SN,'Color','blue','LineStyle','--','linewidth',3);
 set(line_av_NSR_SAV, 'Color','magenta','LineStyle','-','Marker','*','linewidth',3);
+set(line_av_NSR_Sl0, 'Color','red','LineStyle','--','Marker','+','linewidth',3);
+set(line_av_NSR_boxed_Sl0, 'Color','cyan','Marker','+','linewidth',3);
 set(line_av_NSR_BSSl0, 'Color','green','linewidth',3);
 
 
@@ -271,17 +321,20 @@ line_av_time_BP = plot( p_start:p_delta:1,av_time_BP);
 line_av_time_boxed_BP = plot( p_start:p_delta:1,av_time_boxed_BP); 
 line_av_time_SN = plot( p_start:p_delta:1,av_time_SN); 
 line_av_time_SAV = plot( p_start:p_delta:1,av_time_SAV); 
+line_av_time_Sl0 = plot( p_start:p_delta:1,av_time_Sl0); 
+line_av_time_boxed_Sl0 = plot( p_start:p_delta:1,av_time_boxed_Sl0); 
 line_av_time_BSSl0 = plot( p_start:p_delta:1,av_time_BSSl0); 
 
 
-set(line_av_time_BP, 'Color','black','LineStyle',':','Marker','+','linewidth',3);
+set(line_av_time_BP, 'Color','black','Marker','+','linewidth',3);
 set(line_av_time_boxed_BP, 'Color','red','LineStyle',':','Marker','diamond','linewidth',3);
 set(line_av_time_SN,'Color','blue','LineStyle','--','linewidth',3);
 set(line_av_time_SAV, 'Color','magenta','LineStyle','-','Marker','*','linewidth',3);
+set(line_av_time_Sl0, 'Color','red','LineStyle','--','Marker','+','linewidth',3);
+set(line_av_time_boxed_Sl0, 'Color','cyan','Marker','+','linewidth',3);
 set(line_av_time_BSSl0, 'Color','green','linewidth',3);
 
-
-xlabel(ax3,'$p$','Interpreter','LaTex','FontSize',30);
+xlabel(ax3,'$1-p$','Interpreter','LaTex','FontSize',30);
 ylabel(ax3,'Run Time'); 
 axis([p_start 1 0 1]);
 set(gca,'FontSize',25);
@@ -295,21 +348,23 @@ legend_BP = plot( 1, nan);
 legend_boxed_BP =  plot( 1, nan);
 legend_SN =  plot( 1, nan);
 legend_SAV = plot( 1, nan); 
+legend_Sl0 =  plot( 1, nan); 
+legend_boxed_Sl0 =  plot( 1, nan); 
 legend_BSSl0 =  plot( 1, nan); 
 
 
-set(legend_BP, 'Color','black','LineStyle',':','Marker','+','linewidth',3);
+set(legend_BP, 'Color','black','Marker','+','linewidth',3);
 set(legend_boxed_BP, 'Color','red','LineStyle',':','Marker','diamond','linewidth',3);
 set(legend_SN,'Color','blue','LineStyle','--','linewidth',3);
 set(legend_SAV, 'Color','magenta','LineStyle','-','Marker','*','linewidth',3);
+set(legend_Sl0, 'Color','red','LineStyle','--','Marker','+','linewidth',3);
+set(legend_boxed_Sl0, 'Color','cyan','Marker','+','linewidth',3);
 set(legend_BSSl0, 'Color','green','linewidth',3);
 
-lngd = legend([legend_BP legend_boxed_BP legend_SN legend_SAV legend_BSSl0],'BP', 'Boxed BP', 'SN', 'SAV', 'BSSL0',...
+lngd = legend([legend_BP legend_boxed_BP legend_SN legend_SAV legend_Sl0 legend_boxed_Sl0 legend_BSSl0],'BP', 'Boxed BP', 'SN', 'SAV', 'SL0','Boxed SL0', 'BSSL0',...
               'Location','southeast'); 
 
 hold off
 set(hSub, 'Visible', 'off');
 set(lngd, 'Interpreter', 'latex', 'fontsize', 20);
-
-
 tightfig;
